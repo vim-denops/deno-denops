@@ -1,5 +1,8 @@
 import { Dispatcher } from "https://deno.land/x/msgpack_rpc@v2.3/mod.ts";
-import { Message, Session } from "../../vim-channel-command-deno/mod.ts";
+import {
+  Message,
+  Session,
+} from "https://deno.land/x/vim_channel_command@v0.0/mod.ts";
 import { AbstractFacade } from "../facade.ts";
 
 class Vim extends AbstractFacade {
