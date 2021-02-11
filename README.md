@@ -1,6 +1,6 @@
 # 🐜 denops-deno
 
-[Deno][] module for [denops.vim][].
+[Deno][Deno] module for [denops.vim][denops.vim].
 
 **UNDER DEVELOPMENT**
 
@@ -9,5 +9,5 @@
 
 ## License
 
-The code follows MIT license written in [LICENSE](./LICENSE).
-Contributors need to agree that any modifications sent in this repository follow the license.
+The code follows MIT license written in [LICENSE](./LICENSE). Contributors need
+to agree that any modifications sent in this repository follow the license.
