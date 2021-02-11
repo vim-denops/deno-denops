@@ -33,13 +33,16 @@ export async function startServer(options: ServerOptions = {}): Promise<void> {
     async dispatch(
       name: unknown,
       method: unknown,
-      ...params: unknown[]
+      params: unknown,
     ): Promise<unknown> {
       if (typeof name !== "string") {
         throw new Error("'name' must be string");
       }
       if (typeof method !== "string") {
         throw new Error("'method' must be string");
+      }
+      if (!Array.isArray(params)) {
+        throw new Error("'params' must be a string array");
       }
       await facade.debug(`Dispatch '${method}' in '${name}'`);
       const session = pluginRegistry[name];
