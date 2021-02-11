@@ -15,6 +15,7 @@ class Neovim extends AbstractFacade {
   }
 
   command(expr: string): Promise<void> {
+    // XXX: Should not be 'notify' here?
     return this.#session.call("nvim_command", expr).catch(this.error).then();
   }
 

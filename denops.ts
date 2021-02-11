@@ -17,6 +17,7 @@ export class Denops {
   }
 
   async command(expr: string): Promise<void> {
+    // XXX: Should not be 'notify' here?
     await this.#session.call("command", expr);
   }
 
