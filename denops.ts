@@ -1,19 +1,38 @@
 import { Dispatcher, Session } from "./deps.ts";
+import {
+  isDedicatedWorkerGlobalScope,
+  WorkerReader,
+  WorkerWriter,
+} from "./worker.ts";
 
 /**
  * A denops host (Vim/Neovim) interface.
  */
 export class Denops {
   #session: Session;
-  #listener: Promise<void>;
 
   constructor(
     dispatcher: Dispatcher,
-    reader: Deno.Reader & Deno.Closer = Deno.stdin,
-    writer: Deno.Writer = Deno.stdout,
+    reader?: Deno.Reader & Deno.Closer,
+    writer?: Deno.Writer,
   ) {
+    if (!reader) {
+      if (!isDedicatedWorkerGlobalScope(self)) {
+        throw new Error(
+          "'reader' cannot be omitted when Denops is constructed on non Worker thread.",
+        );
+      }
+      reader = new WorkerReader(self);
+    }
+    if (!writer) {
+      if (!isDedicatedWorkerGlobalScope(self)) {
+        throw new Error(
+          "'writer' cannot be omitted when Denops is constructed on non Worker thread.",
+        );
+      }
+      writer = new WorkerWriter(self);
+    }
     this.#session = new Session(reader, writer, dispatcher);
-    this.#listener = this.#session.listen();
   }
 
   /**
@@ -61,9 +80,12 @@ export class Denops {
   }
 
   /**
-   * Wait until the host is closed
+   * Start main event-loop of the plugin
    */
-  async waitClosed(): Promise<void> {
-    await this.#listener;
+  start(main: () => Promise<void>): void {
+    const waiter = Promise.all([this.#session.listen(), main()]);
+    waiter.catch((e) => {
+      console.warn("Unexpected error:", e);
+    });
   }
 }
