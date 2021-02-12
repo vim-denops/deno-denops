@@ -24,8 +24,7 @@ jobs:
           deno-version: v1.x
       - name: Format
         run: |
-          deno fmt
-          git diff --exit-code
+          deno fmt --check
 
   # test:
   #   runs-on: ubuntu-latest
