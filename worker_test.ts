@@ -1,36 +1,5 @@
 import { assert, assertEquals } from "./deps_test.ts";
-import {
-  isDedicatedWorkerGlobalScope,
-  WorkerReader,
-  WorkerWriter,
-} from "./worker.ts";
-
-Deno.test(
-  "isDedicatedWorkerGlobalScope returns true if given self seems DedicatedWorkerGlobalScope",
-  () => {
-    const self = {
-      close: () => undefined,
-      postMessage: () => undefined,
-    };
-    assert(isDedicatedWorkerGlobalScope(self));
-  },
-);
-
-Deno.test(
-  "isDedicatedWorkerGlobalScope returns false if given self seems not DedicatedWorkerGlobalScope",
-  () => {
-    assert(
-      !isDedicatedWorkerGlobalScope({
-        postMessage: () => undefined,
-      }),
-    );
-    assert(
-      !isDedicatedWorkerGlobalScope({
-        close: () => undefined,
-      }),
-    );
-  },
-);
+import { WorkerReader, WorkerWriter } from "./worker.ts";
 
 Deno.test(
   "WorkerWriter invokes internal worker.postMessage when data is written by 'write' method",

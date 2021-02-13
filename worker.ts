@@ -58,19 +58,3 @@ export class WorkerReader implements Deno.Reader, Deno.Closer {
     this.#worker.terminate();
   }
 }
-
-/**
- * Check if the self is DedicatedWorkerGlobalScope
- *
- * Note that Deno 1.7.2 does not provide the interface of DedicatedWorkerGlobalScope
- * thus the Worker is used instead to type self.
- */
-export function isDedicatedWorkerGlobalScope(self: unknown): self is Worker {
-  // deno-lint-ignore no-explicit-any
-  const aself = self as any;
-  return (
-    !!aself &&
-    typeof aself.close === "function" &&
-    typeof aself.postMessage === "function"
-  );
-}
