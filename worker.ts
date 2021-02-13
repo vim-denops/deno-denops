@@ -1,9 +1,18 @@
 import { copyBytes, Queue } from "./deps.ts";
 
-export class WorkerWriter implements Deno.Writer {
-  #worker: Worker;
+type WorkerForWorkerWriter = {
+  postMessage(message: number[]): void;
+};
 
-  constructor(worker: Worker) {
+type WorkerForWorkerReader = {
+  onmessage(message: MessageEvent<number[]>): void;
+  terminate(): void;
+};
+
+export class WorkerWriter implements Deno.Writer {
+  #worker: WorkerForWorkerWriter;
+
+  constructor(worker: WorkerForWorkerWriter) {
     this.#worker = worker;
   }
 
@@ -18,20 +27,23 @@ export class WorkerWriter implements Deno.Writer {
 
 export class WorkerReader implements Deno.Reader, Deno.Closer {
   #queue?: Queue<Uint8Array>;
-  #worker: Worker;
+  #closed: boolean;
+  #worker: WorkerForWorkerReader;
 
-  constructor(worker: Worker) {
+  constructor(worker: WorkerForWorkerReader) {
     this.#queue = new Queue();
+    this.#closed = false;
     this.#worker = worker;
     this.#worker.onmessage = (e: MessageEvent<number[]>) => {
-      if (this.#queue) {
+      if (this.#queue && !this.#closed) {
         this.#queue.put_nowait(new Uint8Array(e.data));
       }
     };
   }
 
   async read(p: Uint8Array): Promise<number | null> {
-    if (!this.#queue) {
+    if (!this.#queue || (this.#closed && this.#queue.empty())) {
+      this.#queue = undefined;
       return await Promise.resolve(null);
     }
     const r = await this.#queue.get();
@@ -40,7 +52,7 @@ export class WorkerReader implements Deno.Reader, Deno.Closer {
   }
 
   close(): void {
-    this.#queue = undefined;
+    this.#closed = true;
     this.#worker.terminate();
   }
 }
