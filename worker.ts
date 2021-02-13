@@ -1,11 +1,13 @@
 import { copyBytes, Queue } from "./deps.ts";
 
 type WorkerForWorkerWriter = {
-  postMessage(message: number[]): void;
+  // deno-lint-ignore no-explicit-any
+  postMessage(message: any): void;
 };
 
 type WorkerForWorkerReader = {
-  onmessage(message: MessageEvent<number[]>): void;
+  // deno-lint-ignore no-explicit-any
+  onmessage?: (message: MessageEvent<any>) => void;
   terminate(): void;
 };
 

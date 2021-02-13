@@ -65,26 +65,17 @@ export class Denops {
   }
 
   /**
-   * Output string representation of params on the host.
-   *
-   * This does nothing if debug mode of the denops is not enabled by users.
+   * Echo text on the host.
    */
-  async debug(...params: unknown[]): Promise<void> {
-    await this.#session.call("debug", ...params);
+  async echo(text: string): Promise<void> {
+    await this.#session.call("echo", [text]);
   }
 
   /**
-   * Output string representation of params on the host as an info.
+   * Echo text on the host.
    */
-  async info(...params: unknown[]): Promise<void> {
-    await this.#session.call("info", ...params);
-  }
-
-  /**
-   * Output string representation of params on the host as an error.
-   */
-  async error(...params: unknown[]): Promise<void> {
-    await this.#session.call("error", ...params);
+  async echomsg(text: string): Promise<void> {
+    await this.#session.call("echomsg", [text]);
   }
 
   /**
