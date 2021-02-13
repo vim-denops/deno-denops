@@ -1,46 +1,45 @@
 import { Dispatcher, Session } from "./deps.ts";
-import {
-  isDedicatedWorkerGlobalScope,
-  WorkerReader,
-  WorkerWriter,
-} from "./worker.ts";
+import { WorkerReader, WorkerWriter } from "./worker.ts";
 
 /**
  * A denops host (Vim/Neovim) interface.
  */
 export class Denops {
+  #name: string;
   #session: Session;
 
   constructor(
-    dispatcher: Dispatcher,
-    reader?: Deno.Reader & Deno.Closer,
-    writer?: Deno.Writer,
+    name: string,
+    reader: Deno.Reader & Deno.Closer,
+    writer: Deno.Writer,
+    dispatcher: Dispatcher = {},
   ) {
-    if (!reader) {
-      if (!isDedicatedWorkerGlobalScope(self)) {
-        throw new Error(
-          "'reader' cannot be omitted when Denops is constructed on non Worker thread.",
-        );
-      }
-      reader = new WorkerReader(self);
-    }
-    if (!writer) {
-      if (!isDedicatedWorkerGlobalScope(self)) {
-        throw new Error(
-          "'writer' cannot be omitted when Denops is constructed on non Worker thread.",
-        );
-      }
-      writer = new WorkerWriter(self);
-    }
+    this.#name = name;
     this.#session = new Session(reader, writer, dispatcher);
+  }
+
+  /**
+   * Start main event-loop of the plugin
+   */
+  static start(main: (denops: Denops) => Promise<void>): void {
+    // deno-lint-ignore no-explicit-any
+    const name = (self as any).name ?? "unknown";
+    // deno-lint-ignore no-explicit-any
+    const worker = (self as any) as Worker;
+    const reader = new WorkerReader(worker);
+    const writer = new WorkerWriter(worker);
+    const denops = new Denops(name, reader, writer);
+    const waiter = Promise.all([denops.#session.listen(), main(denops)]);
+    waiter.catch((e) => {
+      console.error("Unexpected error on denops server", e);
+    });
   }
 
   /**
    * Plugin name
    */
   get name(): string {
-    // deno-lint-ignore no-explicit-any
-    return (self as any).name ?? "unknown";
+    return this.#name;
   }
 
   /**
@@ -65,35 +64,30 @@ export class Denops {
   }
 
   /**
-   * Output string representation of params on the host.
-   *
-   * This does nothing if debug mode of the denops is not enabled by users.
+   * Echo text on the host.
    */
-  async debug(...params: unknown[]): Promise<void> {
-    await this.#session.call("debug", ...params);
+  async echo(text: string): Promise<void> {
+    await this.#session.notify("echo", [text]);
   }
 
   /**
-   * Output string representation of params on the host as an info.
+   * Echo text on the host.
    */
-  async info(...params: unknown[]): Promise<void> {
-    await this.#session.call("info", ...params);
+  async echomsg(text: string): Promise<void> {
+    await this.#session.notify("echomsg", [text]);
   }
 
   /**
-   * Output string representation of params on the host as an error.
+   * Extend dispatcher of the internal msgpack_rpc session
    */
-  async error(...params: unknown[]): Promise<void> {
-    await this.#session.call("error", ...params);
+  extendDispatcher(dispatcher: Dispatcher): void {
+    this.#session.extendDispatcher(dispatcher);
   }
 
   /**
-   * Start main event-loop of the plugin
+   * Clear dispatcher of the internal msgpack_rpc session
    */
-  start(main: () => Promise<void>): void {
-    const waiter = Promise.all([this.#session.listen(), main()]);
-    waiter.catch((e) => {
-      console.warn("Unexpected error:", e);
-    });
+  clearDispatcher(): void {
+    this.#session.clearDispatcher();
   }
 }
