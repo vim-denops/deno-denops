@@ -36,6 +36,14 @@ export class Denops {
   }
 
   /**
+   * Plugin name
+   */
+  get name(): string {
+    // deno-lint-ignore no-explicit-any
+    return (self as any).name ?? "unknown";
+  }
+
+  /**
    * Execute a command (expr) on the host.
    */
   async command(expr: string): Promise<void> {
