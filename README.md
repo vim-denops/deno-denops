@@ -1,7 +1,7 @@
 # 🐜 denops-deno
 
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/denops/mod.ts)
-[![Test](https://github.com/vim-denops/denops-deno/workflows/Test/badge.svg)](https://github.com/vim-denops/denops-deno/actions?query=workflow%3ATest)
+[![deno](https://github.com/vim-denops/denops-deno/workflows/deno/badge.svg)](https://github.com/vim-denops/denops-deno/actions?query=workflow%3Adeno)
 
 [Deno][deno] module for [denops.vim][denops.vim].
 
