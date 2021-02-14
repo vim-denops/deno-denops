@@ -1,10 +1,11 @@
 import { Dispatcher, Session } from "./deps.ts";
 import { WorkerReader, WorkerWriter } from "./worker.ts";
+import { HostService, VariableGroup } from "./host.ts";
 
 /**
  * A denops host (Vim/Neovim) interface.
  */
-export class Denops {
+export class Denops implements HostService {
   #name: string;
   #session: Session;
 
@@ -75,6 +76,36 @@ export class Denops {
    */
   async echomsg(text: string): Promise<void> {
     await this.#session.notify("echomsg", [text]);
+  }
+
+  /**
+   * Get a (current) variable on Vim script.
+   *
+   * The group is one of ['g', 'b', 'w', 't', 'v'] which represents
+   * global, buffer, window, tabpage, and vim respectively.
+   *
+   * If you need non current buffer/window/tabpage variable, use
+   * 'getbufvar/getwinvar/gettabvar' with 'call()' function.
+   */
+  async getvar(group: VariableGroup, prop: string): Promise<unknown> {
+    return await this.#session.call("getvar", [group, prop]);
+  }
+
+  /**
+   * Set a (current) variable on Vim script
+   *
+   * The group is one of ['g', 'b', 'w', 't', 'v'] which represents
+   * global, buffer, window, tabpage, and vim respectively.
+   *
+   * If you need non current buffer/window/tabpage variable, use
+   * 'setbufvar/setwinvar/settabvar' with 'call()' function.
+   */
+  async setvar(
+    group: VariableGroup,
+    prop: string,
+    value: unknown,
+  ): Promise<void> {
+    await this.#session.call("setvar", [group, prop, value]);
   }
 
   /**
