@@ -1,14 +1,16 @@
 import { Dispatcher, Session } from "./deps.ts";
+import { Api, Context } from "./api.ts";
+import { getCacheOrElse } from "./cache.ts";
 import { WorkerReader, WorkerWriter } from "./worker.ts";
 
 /**
- * A denops host (Vim/Neovim) interface.
+ * Denops provides API to access plugin host (Vim/Neovim)
  */
-export class Denops {
+export class Denops implements Api {
   #name: string;
   #session: Session;
 
-  constructor(
+  private constructor(
     name: string,
     reader: Deno.Reader & Deno.Closer,
     writer: Deno.Writer,
@@ -19,19 +21,32 @@ export class Denops {
   }
 
   /**
+   * Get thread-local denops instance
+   */
+  static get(): Denops {
+    return getCacheOrElse("denops", () => {
+      // deno-lint-ignore no-explicit-any
+      const worker = self as any;
+      const reader = getCacheOrElse(
+        "workerReader",
+        () => new WorkerReader(worker),
+      );
+      const writer = getCacheOrElse(
+        "workerWriter",
+        () => new WorkerWriter(worker),
+      );
+      return new Denops(worker.name, reader, writer);
+    });
+  }
+
+  /**
    * Start main event-loop of the plugin
    */
   static start(main: (denops: Denops) => Promise<void>): void {
-    // deno-lint-ignore no-explicit-any
-    const name = (self as any).name ?? "unknown";
-    // deno-lint-ignore no-explicit-any
-    const worker = (self as any) as Worker;
-    const reader = new WorkerReader(worker);
-    const writer = new WorkerWriter(worker);
-    const denops = new Denops(name, reader, writer);
+    const denops = Denops.get();
     const waiter = Promise.all([denops.#session.listen(), main(denops)]);
     waiter.catch((e) => {
-      console.error("Unexpected error on denops server", e);
+      console.error(`Unexpected error occured in '${denops.name}'`, e);
     });
   }
 
@@ -42,39 +57,16 @@ export class Denops {
     return this.#name;
   }
 
-  /**
-   * Execute a command (expr) on the host.
-   */
-  async command(expr: string): Promise<void> {
-    await this.#session.notify("command", expr);
+  async cmd(cmd: string, context: Context = {}): Promise<void> {
+    await this.#session.call("cmd", cmd, context);
   }
 
-  /**
-   * Evaluate an expression (expr) on the host and return the result.
-   */
-  async eval(expr: string): Promise<unknown> {
-    return await this.#session.call("eval", expr);
+  async eval(expr: string, context: Context = {}): Promise<unknown> {
+    return await this.#session.call("eval", expr, context);
   }
 
-  /**
-   * Call a function on the host and return the result.
-   */
-  async call(method: string, params: unknown[]): Promise<unknown> {
-    return await this.#session.call("call", method, params);
-  }
-
-  /**
-   * Echo text on the host.
-   */
-  async echo(text: string): Promise<void> {
-    await this.#session.notify("echo", [text]);
-  }
-
-  /**
-   * Echo text on the host.
-   */
-  async echomsg(text: string): Promise<void> {
-    await this.#session.notify("echomsg", [text]);
+  async call(func: string, ...args: unknown[]): Promise<unknown> {
+    return await this.#session.call("call", func, ...args);
   }
 
   /**
