@@ -1,4 +1,4 @@
-import { Dispatcher, Session } from "./deps.ts";
+import { Dispatcher, DispatcherFrom, Session } from "./deps.ts";
 import { Api, Context } from "./api.ts";
 import { getCacheOrElse } from "./cache.ts";
 import { WorkerReader, WorkerWriter } from "./worker.ts";
@@ -83,3 +83,6 @@ export class Denops implements Api {
     this.#session.clearDispatcher();
   }
 }
+
+// Re-export
+export type { Dispatcher, DispatcherFrom };
