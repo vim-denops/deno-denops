@@ -31,6 +31,19 @@ jobs:
       - uses: denolib/setup-deno@v2
         with:
           deno-version: v1.7.2
+      - uses: rhysd/action-setup-vim@v1
+        id: vim
+        with:
+          neovim: false
+          version: v8.2.2525
+      - uses: rhysd/action-setup-vim@v1
+        id: nvim
+        with:
+          neovim: true
+          version: stable
       - name: Test
         run: |
-          deno test
+          deno test --allow-run --allow-net --allow-env
+        env:
+          DENOPS_VIM: ${{ steps.vim.outputs.executable }}
+          DENOPS_NVIM: ${{ steps.nvim.outputs.executable }}
