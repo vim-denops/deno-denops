@@ -1,7 +1,12 @@
-import { Dispatcher, DispatcherFrom, Session } from "./deps.ts";
+import {
+  Dispatcher,
+  DispatcherFrom,
+  Session,
+  WorkerReader,
+  WorkerWriter,
+} from "./deps.ts";
 import { Api, Context } from "./api.ts";
 import { getCacheOrElse } from "./cache.ts";
-import { WorkerReader, WorkerWriter } from "./worker.ts";
 
 /**
  * Denops provides API to access plugin host (Vim/Neovim)
