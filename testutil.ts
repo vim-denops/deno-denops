@@ -67,6 +67,7 @@ export async function withVim(
       `let ch = ch_open('127.0.0.1:${addr.port}')`,
       ...cmds,
     ],
+    "stdin": "piped",
   });
   const conn = await server.accept();
   try {
@@ -75,6 +76,7 @@ export async function withVim(
   } finally {
     conn.close();
     server.close();
+    vim.stdin.close();
     vim.close();
   }
 }
