@@ -51,7 +51,7 @@ export class Denops implements Api {
     const denops = Denops.get();
     const waiter = Promise.all([denops.#session.listen(), main(denops)]);
     waiter.catch((e) => {
-      console.error(`Unexpected error occured in '${denops.name}'`, e);
+      console.error(`Unexpected error occurred in '${denops.name}'`, e);
     });
   }
 
