@@ -4,8 +4,7 @@ export type {
   Dispatcher,
   DispatcherFrom,
 } from "https://deno.land/x/msgpack_rpc@v2.7/mod.ts";
-export { copy as copyBytes } from "https://deno.land/std@0.92.0/bytes/mod.ts";
 export {
   WorkerReader,
   WorkerWriter,
-} from "https://deno.land/x/workerio@v1.0/mod.ts";
+} from "https://deno.land/x/workerio@v1.1/mod.ts";
