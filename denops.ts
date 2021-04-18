@@ -62,16 +62,24 @@ export class Denops implements Api {
     return this.#name;
   }
 
+  async dispatch(
+    name: string,
+    method: string,
+    params: unknown[],
+  ): Promise<unknown> {
+    return await this.#session.call("dispatch", name, method, params);
+  }
+
+  async call(func: string, ...args: unknown[]): Promise<unknown> {
+    return await this.#session.call("call", func, ...args);
+  }
+
   async cmd(cmd: string, context: Context = {}): Promise<void> {
     await this.#session.call("cmd", cmd, context);
   }
 
   async eval(expr: string, context: Context = {}): Promise<unknown> {
     return await this.#session.call("eval", expr, context);
-  }
-
-  async call(func: string, ...args: unknown[]): Promise<unknown> {
-    return await this.#session.call("call", func, ...args);
   }
 
   /**

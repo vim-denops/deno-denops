@@ -10,17 +10,22 @@ export interface Context {
  */
 export interface Api {
   /**
-   * Call {func} with given {args} and return the result
+   * Dispatch {method} of {name} plugin with given {params} directly and return the result
+   */
+  dispatch(name: string, method: string, params: unknown[]): Promise<unknown>;
+
+  /**
+   * Call {func} of Vim/Nevoim with given {args} and return the result
    */
   call(func: string, ...args: unknown[]): Promise<unknown>;
 
   /**
-   * Execute {cmd} under the {context}
+   * Execute {cmd} of Vim/Neovim under the {context}
    */
   cmd(cmd: string, context: Context): Promise<void>;
 
   /**
-   * Evaluate {expr} under the {context} and return result
+   * Evaluate {expr} of Vim/Neovim under the {context} and return result
    */
   eval(expr: string, context: Context): Promise<unknown>;
 }
