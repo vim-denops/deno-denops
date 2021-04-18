@@ -1,3 +1,7 @@
+**DEPRECATED**
+
+Use https://deno.land/x/denops_core instead.
+
 # 🐜 denops-deno
 
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/denops/mod.ts)
