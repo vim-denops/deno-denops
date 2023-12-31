@@ -1,49 +1,38 @@
-name: deno
+name: test
 
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: "0 7 * * 0"
+  push:
+    paths:
+      - "**.md"
+      - "**.ts"
+      - ".github/workflows/test.yml"
+      - "deno.jsonc"
+  pull_request:
+    paths:
+      - "**.md"
+      - "**.ts"
+      - ".github/workflows/test.yml"
+      - "deno.jsonc"
 
 jobs:
-  lint:
-    runs-on: ubuntu-20.04
+  check:
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-latest
+        version:
+          - "1.x"
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@v2
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.7.2
-      - name: Lint
-        run: deno lint --unstable
-
-  format:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@v2
-        with:
-          deno-version: v1.7.2
-      - name: Format
-        run: |
-          deno fmt --check
-
-  test:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@v2
-        with:
-          deno-version: v1.7.2
-      - uses: rhysd/action-setup-vim@v1
-        id: vim
-        with:
-          neovim: false
-          version: v8.2.2525
-      - uses: rhysd/action-setup-vim@v1
-        id: nvim
-        with:
-          neovim: true
-          version: stable
-      - name: Test
-        run: |
-          deno test --allow-run --allow-net --allow-env
-        env:
-          DENOPS_VIM: ${{ steps.vim.outputs.executable }}
-          DENOPS_NVIM: ${{ steps.nvim.outputs.executable }}
+          deno-version: "${{ matrix.version }}"
+      - name: Lint check
+        run: deno lint
+      - name: Format check
+        run: deno fmt --check
+      - name: Type check
+        run: deno task check

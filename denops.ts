@@ -1,101 +1,125 @@
-import {
-  Dispatcher,
-  DispatcherFrom,
-  Session,
-  WorkerReader,
-  WorkerWriter,
-} from "./deps.ts";
-import { Api, Context } from "./api.ts";
-import { getCacheOrElse } from "./cache.ts";
+/**
+ * Method dispatcher
+ */
+export interface Dispatcher {
+  [key: string]: (...args: unknown[]) => unknown;
+}
 
 /**
- * Denops provides API to access plugin host (Vim/Neovim)
+ * Context which is expanded to the local namespace (l:)
  */
-export class Denops implements Api {
-  #name: string;
-  #session: Session;
+export type Context = Record<string, unknown>;
 
-  private constructor(
-    name: string,
-    reader: Deno.Reader & Deno.Closer,
-    writer: Deno.Writer,
-    dispatcher: Dispatcher = {},
-  ) {
-    this.#name = name;
-    this.#session = new Session(reader, writer, dispatcher);
-  }
+/**
+ * Environment meta information.
+ */
+export interface Meta {
+  // Current denops mode.
+  // In "debug" or "test" mode, some features become enabled
+  // which might impact the performance.
+  readonly mode: "release" | "debug" | "test";
+  // Host program.
+  readonly host: "vim" | "nvim";
+  // Host program version.
+  readonly version: string;
+  // Host platform name.
+  readonly platform: "windows" | "mac" | "linux";
+}
 
-  /**
-   * Get thread-local denops instance
-   */
-  static get(): Denops {
-    return getCacheOrElse("denops", () => {
-      // deno-lint-ignore no-explicit-any
-      const worker = self as any;
-      const reader = getCacheOrElse(
-        "workerReader",
-        () => new WorkerReader(worker),
-      );
-      const writer = getCacheOrElse(
-        "workerWriter",
-        () => new WorkerWriter(worker),
-      );
-      return new Denops(worker.name, reader, writer);
-    });
-  }
+/**
+ * Batch error which is raised when one of function fails during batch process
+ */
+export class BatchError extends Error {
+  // A result list which is successfully completed prior to the error
+  readonly results: unknown[];
 
-  /**
-   * Start main event-loop of the plugin
-   */
-  static start(main: (denops: Denops) => Promise<void>): void {
-    const denops = Denops.get();
-    const waiter = Promise.all([denops.#session.listen(), main(denops)]);
-    waiter.catch((e) => {
-      console.error(`Unexpected error occurred in '${denops.name}'`, e);
-    });
-  }
-
-  /**
-   * Plugin name
-   */
-  get name(): string {
-    return this.#name;
-  }
-
-  async dispatch(
-    name: string,
-    method: string,
-    params: unknown[],
-  ): Promise<unknown> {
-    return await this.#session.call("dispatch", name, method, params);
-  }
-
-  async call(func: string, ...args: unknown[]): Promise<unknown> {
-    return await this.#session.call("call", func, ...args);
-  }
-
-  async cmd(cmd: string, context: Context = {}): Promise<void> {
-    await this.#session.call("cmd", cmd, context);
-  }
-
-  async eval(expr: string, context: Context = {}): Promise<unknown> {
-    return await this.#session.call("eval", expr, context);
-  }
-
-  /**
-   * Extend dispatcher of the internal msgpack_rpc session
-   */
-  extendDispatcher(dispatcher: Dispatcher): void {
-    this.#session.extendDispatcher(dispatcher);
-  }
-
-  /**
-   * Clear dispatcher of the internal msgpack_rpc session
-   */
-  clearDispatcher(): void {
-    this.#session.clearDispatcher();
+  constructor(message: string, results: unknown[]) {
+    super(message);
+    this.name = "BatchError";
+    this.results = results;
   }
 }
 
-// Re-export
-export type { Dispatcher, DispatcherFrom };
+/**
+ * Denpos is a facade instance visible from each denops plugins.
+ */
+export interface Denops {
+  /**
+   * Denops instance name which uses to communicate with vim.
+   */
+  readonly name: string;
+
+  /**
+   * Environment meta information.
+   */
+  readonly meta: Meta;
+
+  /**
+   * Context object for plugins.
+   */
+  readonly context: Record<string | number | symbol, unknown>;
+
+  /**
+   * User defined API name and method map which is used to dispatch API request
+   */
+  dispatcher: Dispatcher;
+
+  /**
+   * Redraw text and cursor on Vim.
+   *
+   * It's not equivalent to `redraw` command on Vim script and does nothing on Neovim.
+   * Use `denops.cmd('redraw')` instead if you need to execute `redraw` command.
+   *
+   * @param force: Clear screen prior to redraw.
+   */
+  redraw(force?: boolean): Promise<void>;
+
+  /**
+   * Call an arbitrary function of Vim/Neovim and return the result
+   *
+   * @param fn: A function name of Vim/Neovim.
+   * @param args: Arguments of the function.
+   *
+   * Note that arguments after `undefined` in `args` will be dropped for convenience.
+   */
+  call(fn: string, ...args: unknown[]): Promise<unknown>;
+
+  /**
+   * Call arbitrary functions of Vim/Neovim sequentially without redraw and
+   * return the results.
+   *
+   * It throw a BatchError when one of a function fails. The `results` attribute
+   * of the error instance holds succeeded results of functions prior to the
+   * error.
+   *
+   * @param calls: A list of tuple ([fn, args]) to call Vim/Neovim functions.
+   *
+   * Note that arguments after `undefined` in `args` will be dropped for convenience.
+   */
+  batch(...calls: [string, ...unknown[]][]): Promise<unknown[]>;
+
+  /**
+   * Execute an arbitrary command of Vim/Neovim under a given context.
+   *
+   * @param cmd: A command expression to be executed.
+   * @param ctx: A context object which is expanded to the local namespace (l:)
+   */
+  cmd(cmd: string, ctx?: Context): Promise<void>;
+
+  /**
+   * Evaluate an arbitrary expression of Vim/Neovim under a given context and return the result.
+   *
+   * @param expr: An expression to be evaluated.
+   * @param ctx: A context object which is expanded to the local namespace (l:)
+   */
+  eval(expr: string, ctx?: Context): Promise<unknown>;
+
+  /**
+   * Dispatch an arbitrary function of an arbitrary plugin and return the result.
+   *
+   * @param name: A plugin registration name.
+   * @param fn: A function name in the API registration.
+   * @param args: Arguments of the function.
+   */
+  dispatch(name: string, fn: string, ...args: unknown[]): Promise<unknown>;
+}
