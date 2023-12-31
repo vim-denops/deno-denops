@@ -1,31 +1,17 @@
-**DEPRECATED**
+# denops_core
 
-Use https://deno.land/x/denops_core instead.
-
-# 🐜 denops-deno
-
+[![test](https://github.com/vim-denops/deno-denops/workflows/test/badge.svg)](https://github.com/vim-denops/deno-denops/actions?query=workflow%3Atest)
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/denops/mod.ts)
-[![deno](https://github.com/vim-denops/denops-deno/workflows/deno/badge.svg)](https://github.com/vim-denops/denops-deno/actions?query=workflow%3Adeno)
+[![deno land](http://img.shields.io/badge/available%20on-deno.land/x/denops-lightgrey.svg?logo=deno)](https://deno.land/x/denops)
 
-[Deno][deno] module for [denops.vim][denops.vim]. This module is assumed to be
-used in denops plugin and the code is assumed to be called in a worker thread
-for a plugin.
+This is a core module of [denops.vim][denops.vim] which is an ecosystem of
+Vim/Neovim to write plugins in [Deno][deno].
 
-Note that this module focused to provide primitive features. See
-[denops-std-deno](https://github.com/vim-denops/denops-std-deno) for more useful
-features.
-
-**UNDER DEVELOPMENT**
+Note that most of users should use [denops_std][denops_std] module instead to
+write plugins of [denops.vim][denops.vim]. This module is designed as a core
+layer of [denops_std][denops_std] so using this module directly from plugins is
+strongly dis-recommended.
 
 [deno]: https://deno.land/
 [denops.vim]: https://github.com/vim-denops/denops.vim
-
-## Example
-
-See
-[denops-helloworld.vim](https://github.com/vim-denops/denops-helloworld.vim).
-
-## License
-
-The code follows MIT license written in [LICENSE](./LICENSE). Contributors need
-to agree that any modifications sent in this repository follow the license.
+[denops_std]: https://deno.land/x/denops_std
